@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using TestProjectAPI.Data;
+using TestProjectAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-// Get the connection string from appsettings.json
 var configuration = new ConfigurationBuilder()
     .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json")
@@ -20,6 +20,8 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connect
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
 
@@ -67,5 +69,42 @@ async Task SeedDatabase(IServiceProvider serviceProvider)
         };
 
         await userManager.CreateAsync(user, password);
+    }
+
+    if (!dbContext.Bookings.Any())
+    {
+        var random = new Random();
+
+        var names = new[] { "John Doe", "Jane Smith", "Michael Johnson", "Emily Davis" };
+        var emails = new[] { "john@example.com", "jane@example.com", "michael@example.com", "emily@example.com" };
+        var contactNumbers = new[] { "1234567890", "9876543210", "5551234567", "5559876543" };
+
+        var startDate = new DateTime(2023, 6, 1);
+        var endDate = new DateTime(2023, 6, 30);
+
+        var bookings = new List<Booking>();
+        var currentDate = startDate;
+
+        while (currentDate <= endDate)
+        {
+            var booking = new Booking
+            {
+                Id = Guid.NewGuid(),
+                Name = names[random.Next(names.Length)],
+                BookingDate = currentDate,
+                Flexibility = (FlexibilityOptions)random.Next(3),
+                VehicleSize = (VehicleSizeOptions)random.Next(4),
+                ContactNumber = contactNumbers[random.Next(contactNumbers.Length)],
+                EmailAddress = emails[random.Next(emails.Length)],
+                IsApproved = false
+            };
+
+            bookings.Add(booking);
+
+            currentDate = currentDate.AddDays(3);
+        }
+
+        dbContext.Bookings.AddRange(bookings);
+        await dbContext.SaveChangesAsync();
     }
 }
