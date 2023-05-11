@@ -1,35 +1,70 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using TestProjectAPI.Data;
 using TestProjectAPI.Services;
+using System;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-
+// Configuration
 var configuration = new ConfigurationBuilder()
     .SetBasePath(builder.Environment.ContentRootPath)
     .AddJsonFile("appsettings.json")
     .Build();
 
+// Database Configuration
 var connectionString = configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
+// Identity Configuration
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
+// JWT Authentication Configuration
+var jwtSecret = configuration.GetValue<string>("Jwt:Secret");
+var jwtIssuer = configuration.GetValue<string>("Jwt:Issuer");
+var key = Encoding.ASCII.GetBytes(jwtSecret);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = false,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
+
+builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+
+// Authorization Configuration
+builder.Services.AddAuthorization();
+
+// Controllers Configuration
+builder.Services.AddControllers();
+
+// Other Service Registrations
 builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var serviceProvider = scope.ServiceProvider;
-    await SeedDatabase(serviceProvider);
-}
 
 if (app.Environment.IsDevelopment())
 {
@@ -49,7 +84,14 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+using (var scope = app.Services.CreateScope())
+{
+    var serviceProvider = scope.ServiceProvider;
+    await SeedDatabase(serviceProvider);
+}
+
 app.Run();
+
 
 async Task SeedDatabase(IServiceProvider serviceProvider)
 {

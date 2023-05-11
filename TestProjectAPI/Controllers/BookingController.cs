@@ -7,6 +7,7 @@ namespace TestProjectAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class BookingsController : ControllerBase
     {
         private readonly IBookingService _bookingService;
@@ -36,6 +37,7 @@ namespace TestProjectAPI.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public async Task<IActionResult> CreateBooking([FromBody] CreateBookingModel bookingModel)
         {
             if (!ModelState.IsValid)
