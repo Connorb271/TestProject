@@ -1,0 +1,111 @@
+﻿@page "/edit-booking/{id}"
+@using TestProjectFrontEnd.Models.BookingModels;
+@using TestProjectFrontEnd.Services;
+
+@inject NavigationManager NavigationManager
+
+<h3>Edit Booking</h3>
+
+@if (booking == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@editBookingModel" OnValidSubmit="SaveBooking">
+        <DataAnnotationsValidator />
+
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <InputText id="name" class="form-control" @bind-Value="@editBookingModel.Name" />
+            <ValidationMessage For="@(() => editBookingModel.Name)" />
+        </div>
+
+        <div class="form-group">
+            <label for="bookingDate">Booking Date:</label>
+            <InputDate id="bookingDate" class="form-control" @bind-Value="@editBookingModel.BookingDate" />
+            <ValidationMessage For="@(() => editBookingModel.BookingDate)" />
+        </div>
+
+        <div class="form-group">
+            <label for="flexibility">Flexibility:</label>
+            <select id="flexibility" class="form-control" @bind="@editBookingModel.Flexibility">
+                <option value="0">1 Day</option>
+                <option value="1">2 Days</option>
+                <option value="2">3 Days</option>
+            </select>
+            <ValidationMessage For="@(() => editBookingModel.Flexibility)" />
+        </div>
+
+        <div class="form-group">
+            <label for="vehicleSize">Vehicle Size:</label>
+            <select id="vehicleSize" class="form-control" @bind="@editBookingModel.VehicleSize">
+                <option value="0">Small</option>
+                <option value="1">Medium</option>
+                <option value="2">Large</option>
+            </select>
+            <ValidationMessage For="@(() => editBookingModel.VehicleSize)" />
+        </div>
+
+        <div class="form-group">
+            <label for="contactNumber">Contact Number:</label>
+            <InputText id="contactNumber" class="form-control" @bind-Value="@editBookingModel.ContactNumber" />
+            <ValidationMessage For="@(() => editBookingModel.ContactNumber)" />
+        </div>
+
+        <div class="form-group">
+            <label for="emailAddress">Email Address:</label>
+            <InputText id="emailAddress" class="form-control" @bind-Value="@editBookingModel.EmailAddress" />
+            <ValidationMessage For="@(() => editBookingModel.EmailAddress)" />
+        </div>
+
+        <button type="submit" class="btn btn-success">Submit</button>
+    </EditForm>
+}
+
+@code {
+    private BookingModel booking;
+    private EditBookingModel editBookingModel;
+
+    [Parameter]
+    public string Id { get; set; }
+
+    [Inject]
+    private ITokenService TokenService { get; set; }
+
+    [Inject]
+    private IBookingService BookingService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var isLoggedIn = await TokenService.IsLoggedInAsync();
+        if (!isLoggedIn)
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            booking = await BookingService.GetBookingByIdAsync(Id);
+            editBookingModel = new EditBookingModel
+                {
+                    Id = booking.Id,
+                    Name = booking.Name,
+                    BookingDate = booking.BookingDate,
+                    Flexibility = booking.Flexibility,
+                    VehicleSize = booking.VehicleSize,
+                    ContactNumber = booking.ContactNumber,
+                    EmailAddress = booking.EmailAddress
+                };
+        }
+
+    }
+
+    private async Task SaveBooking()
+    {
+        bool isUpdated = await BookingService.UpdateBookingAsync(editBookingModel);
+        if (isUpdated)
+        {
+            NavigationManager.NavigateTo("/booking-list");
+        }
+    }
+}
