@@ -29,6 +29,16 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
 // JWT Authentication Configuration
 var jwtSecret = configuration.GetValue<string>("Jwt:Secret");
 var jwtIssuer = configuration.GetValue<string>("Jwt:Issuer");
@@ -81,7 +91,7 @@ app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseCors("CorsPolicy");
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())

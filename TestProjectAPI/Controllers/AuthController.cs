@@ -24,7 +24,7 @@ namespace TestProjectAPI.Controllers
                 return Unauthorized();
             }
 
-            return Ok(new { Token = token });
+            return Ok(token);
         }
     }
 }
