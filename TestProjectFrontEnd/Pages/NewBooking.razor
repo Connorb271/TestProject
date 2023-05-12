@@ -69,18 +69,14 @@
 
     private async Task HandleCreateBooking()
     {
-        // Call the booking service to create the booking
         var result = await BookingService.CreateBookingAsync(createBookingModel);
 
         if (result != null)
         {
-            // Booking created successfully, perform any necessary actions
-            // and navigate to a confirmation page or display a success message
             NavigationManager.NavigateTo("/booking-confirmation");
         }
         else
         {
-            // Failed to create the booking, display an error message
             await JSRuntime.InvokeVoidAsync("alert", "Failed to create the booking.");
         }
     }

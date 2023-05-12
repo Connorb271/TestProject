@@ -1,0 +1,134 @@
+﻿@page "/booking-list"
+@using TestProjectFrontEnd.Models.BookingModels;
+@using TestProjectFrontEnd.Services;
+
+@inject IBookingService BookingService
+@inject NavigationManager NavigationManager
+
+<h3>Booking List</h3>
+
+<div class="mb-3">
+    <a class="btn btn-success" href="/admin-new-booking">Create</a>
+</div>
+
+@if (bookings == null)
+{
+    <p>Loading...</p>
+}
+else if (bookings.Count == 0)
+{
+    <p>No bookings found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Booking Date</th>
+                <th>Flexibility</th>
+                <th>Vehicle Size</th>
+                <th>Contact Number</th>
+                <th>Email Address</th>
+                <th>Is Approved</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var booking in bookings)
+            {
+                <tr>
+                    <td>@booking.Id</td>
+                    <td>@booking.Name</td>
+                    <td>@booking.BookingDate.ToShortDateString()</td>
+                    <td>
+                        @if (booking.Flexibility == 0)
+                        {
+                            <span>1 Day</span>
+                        }
+                        else if (booking.Flexibility == 1)
+                        {
+                            <span>2 Days</span>
+                        }
+                        else if (booking.Flexibility == 2)
+                        {
+                            <span>3 Days</span>
+                        }
+                    </td>
+                    <td>
+                        @if (booking.VehicleSize == 0)
+                        {
+                            <span>Small</span>
+                        }
+                        else if (booking.VehicleSize == 1)
+                        {
+                            <span>Medium</span>
+                        }
+                        else if (booking.VehicleSize == 2)
+                        {
+                            <span>Large</span>
+                        }
+                    </td>
+                    <td>@booking.ContactNumber</td>
+                    <td>@booking.EmailAddress</td>
+                    <td>@booking.IsApproved</td>
+                    <td>
+                        <button class="btn btn-success" @onclick="() => ApproveBooking(booking.Id)"><span class="oi oi-check"></span></button>
+                        <button class="btn btn-danger" @onclick="() => DeleteBooking(booking.Id)"><span class="oi oi-trash"></span></button>
+                        <button class="btn btn-primary" @onclick="() => EditBooking(booking.Id)"><span class="oi oi-pencil"></span></button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<BookingModel> bookings;
+
+    [Inject]
+    private ITokenService TokenService { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var isLoggedIn = await TokenService.IsLoggedInAsync();
+        if (!isLoggedIn)
+        {
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
+            bookings = await BookingService.GetAllBookingsAsync();
+        }
+
+    }
+
+    private async Task ApproveBooking(Guid bookingId)
+    {
+        // Call the booking service to approve the booking
+        bool isApproved = await BookingService.ApproveBookingAsync(bookingId);
+        if (isApproved)
+        {
+            // Refresh the booking list after approval
+            bookings = await BookingService.GetAllBookingsAsync();
+        }
+    }
+
+    private async Task DeleteBooking(Guid bookingId)
+    {
+        // Call the booking service to delete the booking
+        bool isDeleted = await BookingService.DeleteBookingAsync(bookingId);
+        if (isDeleted)
+        {
+            // Refresh the booking list after deletion
+            bookings = await BookingService.GetAllBookingsAsync();
+        }
+    }
+
+    private void EditBooking(Guid bookingId)
+    {
+        // Redirect to the edit page
+        NavigationManager.NavigateTo($"/edit-booking/{bookingId}");
+    }
+}
