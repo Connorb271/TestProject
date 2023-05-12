@@ -9,5 +9,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7282/api/") });
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 await builder.Build().RunAsync();

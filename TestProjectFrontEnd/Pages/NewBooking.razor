@@ -1,0 +1,87 @@
+﻿@page "/new-booking"
+@using System.ComponentModel.DataAnnotations
+@using TestProjectFrontEnd.Models.BookingModels;
+@using TestProjectFrontEnd.Services;
+
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<h3>New Booking</h3>
+
+<EditForm Model="@createBookingModel" OnValidSubmit="HandleCreateBooking">
+    <DataAnnotationsValidator />
+
+    <div class="form-group">
+        <label for="name">Name:</label>
+        <InputText id="name" class="form-control" @bind-Value="@createBookingModel.Name" />
+        <ValidationMessage For="@(() => createBookingModel.Name)" />
+    </div>
+
+    <div class="form-group">
+        <label for="bookingDate">Booking Date:</label>
+        <InputDate id="bookingDate" class="form-control" @bind-Value="@createBookingModel.BookingDate" />
+        <ValidationMessage For="@(() => createBookingModel.BookingDate)" />
+    </div>
+
+    <div class="form-group">
+        <label for="flexibility">Flexibility:</label>
+        <select id="flexibility" class="form-control" @bind="@createBookingModel.Flexibility">
+            <option value="PlusMinus1Day">+- 1 Day</option>
+            <option value="PlusMinus2Days">+- 2 Days</option>
+            <option value="PlusMinus3Days">+- 3 Days</option>
+        </select>
+        <ValidationMessage For="@(() => createBookingModel.Flexibility)" />
+    </div>
+
+    <div class="form-group">
+        <label for="vehicleSize">Vehicle Size:</label>
+        <select id="vehicleSize" class="form-control" @bind="@createBookingModel.VehicleSize">
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+            <option value="Large">Large</option>
+        </select>
+        <ValidationMessage For="@(() => createBookingModel.VehicleSize)" />
+    </div>
+
+    <div class="form-group">
+        <label for="contactNumber">Contact Number:</label>
+        <InputText id="contactNumber" class="form-control" @bind-Value="@createBookingModel.ContactNumber" />
+        <ValidationMessage For="@(() => createBookingModel.ContactNumber)" />
+    </div>
+
+    <div class="form-group">
+        <label for="emailAddress">Email Address:</label>
+        <InputText id="emailAddress" class="form-control" @bind-Value="@createBookingModel.EmailAddress" />
+        <ValidationMessage For="@(() => createBookingModel.EmailAddress)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+</EditForm>
+
+@code {
+    private CreateBookingModel createBookingModel = new CreateBookingModel
+        {
+            BookingDate = DateTime.Today.AddDays(1)
+        };
+
+    [Inject]
+    private IBookingService BookingService { get; set; }
+
+    private async Task HandleCreateBooking()
+    {
+        // Call the booking service to create the booking
+        var result = await BookingService.CreateBookingAsync(createBookingModel);
+
+        if (result != null)
+        {
+            // Booking created successfully, perform any necessary actions
+            // and navigate to a confirmation page or display a success message
+            NavigationManager.NavigateTo("/booking-confirmation");
+        }
+        else
+        {
+            // Failed to create the booking, display an error message
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to create the booking.");
+        }
+    }
+}
